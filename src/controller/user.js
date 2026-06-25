@@ -1,6 +1,7 @@
 const User = require('../model/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail');
 
 const registerUser = async (req, res) => {
     try{
@@ -49,8 +50,8 @@ const registerUser = async (req, res) => {
     catch(err){
         return res.status(500).json({
             success : false,
-            message : 'Error creating user', error : err.message
-        });
+            message : 'Error fetching user profiles' + err.message,
+        })
     }
 }
 
@@ -81,7 +82,7 @@ const userLogin = async (req, res) => {
     }catch(err) {
         return res.status(500).json({
             success : false,
-            message : 'Error logging in' + err.message,
+            message : 'Error fetching user profiles' + err.message,
         })
     }
 }
@@ -195,11 +196,71 @@ const logoutUser = async (req, res) => {
     }
 }
 
+const forgotPassword = async (req, res) => {
+    try{
+        const {email} = req.body;
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(404).json({
+                success : false,
+                message : 'User not found'
+            })
+        }
+
+        const resetToken = jwt.sign({userId : user._id}, process.env.JWT_KEY, {expiresIn : '1h'});
+        const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/user/reset-password/${resetToken}`;
+        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+
+        await sendEmail({
+            email : user.email,
+            subject : 'Password Reset Request',
+            message
+        });
+
+        return res.status(200).json({
+            success : true,
+            message : 'Password reset email sent successfully'
+        })
+
+    }catch(err){
+        return res.status(500).json({
+            success : false,
+            message : 'Error in forgot password' + err.message,
+        })
+    }
+}
+
+const resetPassword = async (req, res) => {
+    try{
+        const {email, newPassword} = req.body;
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(404).json({
+                success : false,
+                message : 'User not found'
+            })
+        }
+        user.password = newPassword;
+        await user.save();
+        res.status(200).json({
+            success : true,
+            message : 'Password reset successfully'
+        })
+    }catch(err){
+        res.status(500).json({
+            success : false,
+            message : 'Error resetting password' + err.message,
+        })
+    }
+}
+
 module.exports = {
     registerUser,
     userLogin,
     getUserAllProfile,
     getUserProfile,
     deleteUserProfile,
-    logoutUser
+    logoutUser,
+    forgotPassword,
+    resetPassword
 };
