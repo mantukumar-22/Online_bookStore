@@ -73,6 +73,7 @@ const userLogin = async (req, res) => {
             })
         }
         const token = jwt.sign({userId : user._id}, process.env.JWT_KEY, {expiresIn : '1d'});
+        res.cookie('token', token);
         return res.status(200).json({
             success : true,
             message : 'User logged in successfully',
@@ -87,35 +88,35 @@ const userLogin = async (req, res) => {
     }
 }
 
-// const updateUserProfile = async (req, res) => {
-//     try{
-//         const id = req.params.id;
-//         const {firstName, lastName, mobile, email} = req.body;
-//         const user = await User.findByIdAndUpdate(
-//             id,
-//             {firstName, lastName, mobile, email},
-//             {new : true}
-//         )
-//         if(!user){
-//             return res.status(404).json({
-//                 success : false,
-//                 message : 'User not found'
-//             })
-//         }
-//         res.status(200).json({
-//             success : true,
-//             message : 'User profile updated successfully',
-//             user
-//         })
+const updateUserProfile = async (req, res) => {
+    try{
+        const id = req.params.id;
+        const {firstName, lastName, mobile, email} = req.body;
+        const user = await User.findByIdAndUpdate(
+            id,
+            {firstName, lastName, mobile, email},
+            {new : true}
+        )
+        if(!user){
+            return res.status(404).json({
+                success : false,
+                message : 'User not found'
+            })
+        }
+        res.status(200).json({
+            success : true,
+            message : 'User profile updated successfully',
+            user
+        })
 
-//     }
-//     catch(err){
-//         res.status(500).json({
-//             success : false,
-//             message : 'Error updating user profile' + err.message,
-//         })
-//     }
-// }
+    }
+    catch(err){
+        res.status(500).json({
+            success : false,
+            message : 'Error updating user profile' + err.message,
+        })
+    }
+}
 
 const getUserAllProfile = async (req, res) => {
     try{
@@ -152,7 +153,7 @@ const getUserProfile = async (req, res) => {
     catch(err){
         res.status(500).json({
             success : false,
-            message : 'Error fetching user profile' + err.message,
+            message : err.message,
         })
     }
 }
@@ -259,6 +260,7 @@ module.exports = {
     userLogin,
     getUserAllProfile,
     getUserProfile,
+    updateUserProfile,
     deleteUserProfile,
     logoutUser,
     forgotPassword,

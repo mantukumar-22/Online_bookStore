@@ -1,47 +1,68 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const User = require("../model/user.js"); // apne path ke hisab se change karo
 
 
-const authMiddleware = (req, res, next) => {
+const isAuthenticatedUser = async(req, res, next) => {
     try{
-    
-        const token = req.body.token;
-        if (!token) {
+        
+        if(!token){
+            return res.status(401).json({
+                success : false,
+                message : "Unautherized"
+            })
+        }
+
+        const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await User.findById(decodedData._id);
+
+        if (!user) {
             return res.status(401).json({
                 success: false,
-                message: "Unauthorized"
+                message: "User not found",
             });
         }
 
-        // const cookie = req.cookies.token;
-        // if(!cookie){
-        //     return res.status(401).json({
-        //         success : false,
-        //         message : 'Unauthorized'
-        //     })
-        // }   
-
-        const decode = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decode;
+        req.user = user;
 
         next();
 
-        return res.status(200).json({
-            success : true,
-            message : 'Authorized',
-            user : req.user
-        })
     }
     catch(err){
-        return res.status(401).json({
+        return res.status(500).json({
             success : false,
-            message : 'Unauthorized',
-            error : err.message
+            message : "Internal Server Error"
         })
     }
 
-       
+    
 }
 
 
-module.exports = authMiddleware;
+const authorizeRole = (...roles) => {
+    return (req, res, next) => {
+
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Please Login First",
+            });
+        }
+
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: `Role (${req.user.role}) is not allowed to access this resource`,
+            });
+        }
+
+        next();
+    };
+}
+    
+
+
+
+
+module.exports = { isAuthenticatedUser, authorizeRole };
 

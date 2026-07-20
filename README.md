@@ -1,43 +1,76 @@
-# BookStore Backend API
+# BookStore Backend
 
-This is the backend API for the BookStore application. It provides endpoints for managing users, books, and orders.
+A simple Express.js backend API for a bookstore application. It provides user registration, login, profile management, book and order endpoints, authentication, and password reset functionality.
 
-This project provides Authentication and Authorization, allowing users to register, log in, and access protected routes based on their roles (e.g., admin, user).
+## Features
 
-role-based access control is implemented to ensure that only authorized users can perform certain actions, such as adding or deleting books.
-## Technologies Used
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JSON Web Tokens (JWT) for authentication
-- bcrypt for password hashing
+- User registration and login with JWT authentication
+- User profile CRUD operations
+- Protected routes with role-based authorization
+- Password reset workflow using email tokens
+- Book and order management endpoints
+
+## Project Structure
+
+- `server.js` - Application entry point
+- `src/app.js` - Express app configuration and middleware setup
+- `src/config/db.js` - MongoDB connection configuration
+- `src/controller/` - Route handlers for users, books, and orders
+- `src/middleware/` - Authentication and authorization middleware
+- `src/model/` - Mongoose schemas for users, books, and orders
+- `src/router/` - Express route definitions
+- `src/utils/` - Utility helpers such as email sending
+
 ## Installation
-1. Clone the repository:
-```bash
-git clone <repository-url>
-```
-2. Install the dependencies:
+
+1. Clone the repository
+2. Install dependencies
+
 ```bash
 npm install
 ```
-3. Set up the environment variables by creating a `.env` file and adding the necessary configuration values.
-4. Start the server:
+
+## Environment Variables
+
+Create a `.env` file in the project root and define the following values:
+
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+JWT_KEY=your_jwt_secret
+EMAIL_SERVICE=your_email_service
+EMAIL_USERNAME=your_email_username
+EMAIL_PASSWORD=your_email_password
+```
+
+> Note: Adjust the variable names if your project uses different names.
+
+## Running the Server
+
 ```bash
 npm start
 ```
 
-## Features
-- User registration and login
-- Role-based access control (admin and user roles)
-- CRUD operations for books (admin only)
-- Order management (users can place orders, admins can view all orders)
 ## API Endpoints
-- `POST /api/users/register`: Register a new user
-- `POST /api/users/login`: Log in a user and receive a JWT token
-- `POST /api/books`: Add a new book (admin only)
-- `GET /api/books`: Get a list of all books
-- `GET /api/books/:id`: Get details of a specific book
-- `PUT /api/books/:id`: Update a book (admin only)
-- `DELETE /api/books/:id`: Delete a book (admin only)
-- `POST /api/orders`: Place a new order (user only)
+
+### User Routes
+
+- `POST /api/v1/user/register` - Register a new user
+- `POST /api/v1/user/login` - Log in an existing user
+- `POST /api/v1/user/logout` - Log out the current user
+- `PUT /api/v1/user/:id` - Update user profile (authenticated, authorized)
+- `GET /api/v1/user/:id` - Get a user profile by ID
+- `GET /api/v1/user/allUserProfile` - Get all user profiles
+- `DELETE /api/v1/user/:id` - Delete a user profile
+- `POST /api/v1/user/forgot-password` - Request password reset email
+- `PUT /api/v1/user/reset-password/:token` - Reset password with token
+
+## Notes
+
+- The backend uses cookies to store authentication tokens.
+- Protect sensitive routes by using JWT middleware and role checks.
+- Ensure email credentials are properly configured for password reset emails.
+
+## License
+
+This project is released under the MIT License.

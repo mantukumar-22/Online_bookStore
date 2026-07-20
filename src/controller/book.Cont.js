@@ -1,13 +1,15 @@
-const Book = require('../model/book');
+const Book = require('../model/book.js');
+const ApiFeatures = require('../utils/search.js');
 
-const addBook = async (req, res) => {
+
+const createBook = async (req, res) => {
     try {
-        const { title, author, description, price } = req.body;
-        const book = new Book({ title, author, description, price });
-        await book.save();
-        return res.status(201).json({ 
+        const book = await Book.create(req.body);
+
+        return res.status(201).json({
             success: true,
-            message: 'Book added successfully', book 
+            message: "Book added successfully",
+            book,
         });
 
     } catch (error) {
@@ -20,17 +22,25 @@ const addBook = async (req, res) => {
 
 const getAllBooks = async (req, res) => {
     try{
-        const books = await Book.find({});
+        const resultPerPage = 5;
 
-        return res.json({
-            success : true,
-            books
-        })
+        const apiFeature = new ApiFeatures(Book.find(), req.query)
+            .search()
+            .filter()
+            .pagination(resultPerPage);
+
+        const books = await apiFeature.query;
+
+        return res.status(200).json({
+            success: true,
+            count: books.length,
+            books,
+        });
     }
     catch(err){
         return res.status(500).json({ 
             success: false,
-            message: 'Failed to add book' 
+            message: 'Failed to fetch books' 
         });
     }
 }
@@ -60,7 +70,7 @@ const getBookById = async (req, res) => {
 
 }
 
-const updateBookById = async (req, res) => {
+const updateBook = async (req, res) => {
     try{
         const id = req.params.id;
         const { title, author, description, price } = req.body;
@@ -89,7 +99,7 @@ const updateBookById = async (req, res) => {
     }
 }
 
-const deleteBookById = async (req, res) => {
+const deleteBook = async (req, res) => {
     try{
         const id = req.params.id;
         const book = await Book.findByIdAndDelete(id);
@@ -114,9 +124,9 @@ const deleteBookById = async (req, res) => {
 
 
 module.exports = {
-    addBook,
+    createBook,
     getAllBooks,
     getBookById,
-    updateBookById,
-    deleteBookById
+    updateBook,
+    deleteBook
 };
