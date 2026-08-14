@@ -1,7 +1,9 @@
 const User = require('../model/user');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+// const bcrypt = require('bcrypt');
+// const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
+
+
 
 const registerUser = async (req, res) => {
     try{
@@ -17,7 +19,7 @@ const registerUser = async (req, res) => {
         }
 
         // hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await User.hashPassword(password);
 
         const user = new User({
             firstName,
@@ -26,25 +28,34 @@ const registerUser = async (req, res) => {
             email,
             password : hashedPassword
         })
+
         await user.save();
 
-        const token = jwt.sign({userId : user._id}, process.env.JWT_KEY, {expiresIn : '1d'});
+        const token = user.generateAuthToken();
 
-        // const cookieOptions = {
-        //     expires : new Date(Date.now() + 24 * 60 * 60 * 1000),
-        // };
-        res.cookie('token', token);
+
+        // Send email
+        await sendEmail({
+            email: user.email,
+            subject: "Welcome to Our Website",
+            message: `Hello ${user.firstName}, your account has been created successfully!`
+        });
+
+        // res.cookie('token', token);
+
+        // Set cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
 
 
         return res.status(201).json({
             success : true,
-            message : 'User registered successfully',
+            message: "User registered successfully",
             user,
-            token,
-            cookie: token
+            token
         })
-
-
 
     }
     catch(err){
@@ -233,15 +244,26 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     try{
-        const {email, newPassword} = req.body;
-        const user = await User.findOne({email});
+
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        // Verify reset token
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_KEY
+        );
+
+        const user = await User.findById(decoded.userId);
         if(!user){
             return res.status(404).json({
                 success : false,
                 message : 'User not found'
             })
         }
-        user.password = newPassword;
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
         await user.save();
         res.status(200).json({
             success : true,

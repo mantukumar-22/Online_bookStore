@@ -1,7 +1,7 @@
-const Book = require('../model/book.js');
-const ApiFeatures = require('../utils/search.js');
+const Book = require("../model/book");
+const ApiFeatures = require("../utils/search");
 
-
+// Create Book
 const createBook = async (req, res) => {
     try {
         const book = await Book.create(req.body);
@@ -9,19 +9,21 @@ const createBook = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: "Book added successfully",
-            book,
+            book
         });
 
     } catch (error) {
-        return res.status(500).json({ 
+        return res.status(500).json({
             success: false,
-            message: 'Failed to add book' 
+            message: error.message
         });
-    }   
+    }
 };
 
+
+// Get All Books
 const getAllBooks = async (req, res) => {
-    try{
+    try {
         const resultPerPage = 5;
 
         const apiFeature = new ApiFeatures(Book.find(), req.query)
@@ -34,93 +36,102 @@ const getAllBooks = async (req, res) => {
         return res.status(200).json({
             success: true,
             count: books.length,
-            books,
+            books
         });
-    }
-    catch(err){
-        return res.status(500).json({ 
-            success: false,
-            message: 'Failed to fetch books' 
-        });
-    }
-}
 
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            message: err.message
+        });
+    }
+};
+
+
+// Get Book By ID
 const getBookById = async (req, res) => {
-    try{
-        const id = req.params.id;
-        const book = await Book.findById(id);
-        if(!book){
+    try {
+        const book = await Book.findById(req.params.id);
+
+        if (!book) {
             return res.status(404).json({
                 success: false,
-                message: 'Book not found'
+                message: "Book not found"
             });
         }
 
-        return res.json({
+        return res.status(200).json({
             success: true,
             book
         });
-    }
-    catch(err){
+
+    } catch (err) {
         return res.status(500).json({
             success: false,
-            message: 'Failed to fetch book by ID'
+            message: err.message
         });
     }
+};
 
-}
 
+// Update Book
 const updateBook = async (req, res) => {
-    try{
-        const id = req.params.id;
-        const { title, author, description, price } = req.body;
+    try {
         const book = await Book.findByIdAndUpdate(
-            id,
-            { title, author, description, price },
-            { new: true }
+            req.params.id,
+            req.body,
+            {
+                new: true,
+                runValidators: true
+            }
         );
-        if(!book){
+
+        if (!book) {
             return res.status(404).json({
                 success: false,
-                message: 'Book not found'
+                message: "Book not found"
             });
         }
-        return res.json({
+
+        return res.status(200).json({
             success: true,
-            message: 'Book updated successfully',
+            message: "Book updated successfully",
             book
         });
-    }
-    catch(err){
+
+    } catch (err) {
         return res.status(500).json({
             success: false,
-            message: 'Failed to update book by ID'
+            message: err.message
         });
     }
-}
+};
 
+
+// Delete Book
 const deleteBook = async (req, res) => {
-    try{
-        const id = req.params.id;
-        const book = await Book.findByIdAndDelete(id);
-        if(!book){
+    try {
+        const book = await Book.findByIdAndDelete(req.params.id);
+
+        if (!book) {
             return res.status(404).json({
                 success: false,
-                message: 'Book not found'
+                message: "Book not found"
             });
         }
 
-        return res.json({
+        return res.status(200).json({
             success: true,
-            message: 'Book deleted successfully'
+            message: "Book deleted successfully"
         });
-    }catch(err){
+
+    } catch (err) {
         return res.status(500).json({
             success: false,
-            message: 'Failed to delete book by ID'
+            message: err.message
         });
     }
-}
+};
 
 
 module.exports = {
